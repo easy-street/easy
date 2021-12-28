@@ -1,0 +1,22 @@
+{
+  "name": "api",
+  "version": "1.0.0",
+  "main": "index.js",
+  "sideEffects": false,
+  "license": "MIT",
+  "private": true,
+  "dependencies": {
+    "lodash.set": "^4.3.2",
+    "qs": "^6.10.2",
+    "utils": "workspace:*"
+  },
+  "devDependencies": {
+    "@supabase/postgrest-js": "^0.35.0",
+    "@supabase/supabase-js": "^1.29.1",
+    "@types/lodash.set": "^4.3.6",
+    "@types/qs": "^6.9.7",
+    "next": "^12.0.7",
+    "openapi-types": "^10.0.0",
+    "tsconfig": "workspace:*"
+  }
+}

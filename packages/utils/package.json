@@ -1,0 +1,11 @@
+{
+  "name": "utils",
+  "version": "1.0.0",
+  "main": "index.js",
+  "sideEffects": false,
+  "license": "MIT",
+  "private": true,
+  "devDependencies": {
+    "tsconfig": "workspace:*"
+  }
+}

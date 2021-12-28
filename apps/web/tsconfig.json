@@ -1,0 +1,17 @@
+{
+  "extends": "tsconfig/nextjs.json",
+  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx"],
+  "exclude": ["node_modules"],
+  "compilerOptions": {
+    "baseUrl": ".",
+    "paths": {
+      "@/components/*": ["components/*"],
+      "@/lib/*": ["lib/*"],
+      "@/types/*": ["types/*"],
+      "@/*": ["*"],
+      "@stitches/react": ["node_modules/@stitches/react"],
+      "@supabase/supabase-js": ["node_modules/@supabase/supabase-js"],
+      "openapi-types": ["node_modules/openapi-types"]
+    }
+  }
+}

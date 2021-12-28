@@ -1,0 +1,71 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Address {
+  id           BigInt    @id @default(autoincrement())
+  created_at   DateTime  @default(now()) @db.Timestamptz(6)
+  address_text String?
+  user_id      String    @db.Uuid
+  user         User      @relation(fields: [user_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@map("addresses")
+}
+
+model Post {
+  id           BigInt    @id @default(autoincrement())
+  created_at   DateTime  @default(now()) @db.Timestamptz(6)
+  display_name String
+  description  String?
+  user_id      String    @default(dbgenerated("'feb45b87-af1f-4c52-aad9-0c3172d325fd'::uuid")) @db.Uuid
+  user         User      @relation(fields: [user_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@map("posts")
+}
+
+model Role {
+  id           BigInt    @id @default(autoincrement())
+  created_at   DateTime  @default(now()) @db.Timestamptz(6)
+  display_name String
+  user_role UserRole[]
+
+  @@map("roles")
+}
+
+model Title {
+  id           BigInt    @id @default(autoincrement())
+  created_at   DateTime  @default(now()) @db.Timestamptz(6)
+  display_name String
+  user User[]
+
+  @@map("titles")
+}
+
+model UserRole {
+  id         BigInt    @id @default(autoincrement())
+  created_at DateTime  @default(now()) @db.Timestamptz(6)
+  user_id    String    @db.Uuid
+  role_id    BigInt
+  role       Role      @relation(fields: [role_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  user       User      @relation(fields: [user_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@map("user_roles")
+}
+
+model User {
+  id         String     @id @default(dbgenerated("extensions.uuid_generate_v4()")) @db.Uuid
+  created_at DateTime  @default(now()) @db.Timestamptz(6)
+  email      String
+  title_id   BigInt?
+  titles     Title?      @relation(fields: [title_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  addresses  Address[]
+  posts      Post[]
+  roles      UserRole[]
+
+  @@map("users")
+}
