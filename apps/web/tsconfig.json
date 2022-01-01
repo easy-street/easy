@@ -11,6 +11,7 @@
       "@/*": ["*"],
       "@stitches/react": ["node_modules/@stitches/react"],
       "@supabase/supabase-js": ["node_modules/@supabase/supabase-js"],
+      "next": ["node_modules/next"],
       "openapi-types": ["node_modules/openapi-types"]
     }
   }

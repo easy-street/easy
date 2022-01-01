@@ -1,0 +1,387 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`basic insert, update, delete basic delete 1`] = `
+Object {
+  "data": Array [
+    Object {
+      "channel_id": "2",
+      "id": "3",
+      "message": "foo",
+      "username": "supabot",
+    },
+  ],
+  "limit": 64,
+  "skip": 0,
+  "total": "1",
+}
+`;
+
+exports[`basic insert, update, delete basic delete 2`] = `
+Object {
+  "data": Array [
+    Object {
+      "channel_id": "1",
+      "id": "1",
+      "message": "Hello World 👋",
+      "username": "supabot",
+    },
+    Object {
+      "channel_id": "2",
+      "id": "2",
+      "message": "Perfection is attained, not when there is nothing more to add, but when there is nothing left to take away.",
+      "username": "supabot",
+    },
+    Object {
+      "channel_id": "2",
+      "id": "3",
+      "message": "foo",
+      "username": "supabot",
+    },
+  ],
+  "limit": 64,
+  "skip": 0,
+  "total": "3",
+}
+`;
+
+exports[`basic insert, update, delete basic insert 1`] = `
+Object {
+  "channel_id": "1",
+  "id": "3",
+  "message": "foo",
+  "username": "supabot",
+}
+`;
+
+exports[`basic insert, update, delete basic insert 2`] = `
+Object {
+  "data": Array [
+    Object {
+      "channel_id": "1",
+      "id": "1",
+      "message": "Hello World 👋",
+      "username": "supabot",
+    },
+    Object {
+      "channel_id": "2",
+      "id": "2",
+      "message": "Perfection is attained, not when there is nothing more to add, but when there is nothing left to take away.",
+      "username": "supabot",
+    },
+    Object {
+      "channel_id": "1",
+      "id": "3",
+      "message": "foo",
+      "username": "supabot",
+    },
+  ],
+  "limit": 64,
+  "skip": 0,
+  "total": "3",
+}
+`;
+
+exports[`basic insert, update, delete basic update 1`] = `
+Object {
+  "channel_id": "2",
+  "id": "3",
+  "message": "foo",
+  "username": "supabot",
+}
+`;
+
+exports[`basic insert, update, delete basic update 2`] = `
+Object {
+  "data": Array [
+    Object {
+      "channel_id": "1",
+      "id": "1",
+      "message": "Hello World 👋",
+      "username": "supabot",
+    },
+    Object {
+      "channel_id": "2",
+      "id": "2",
+      "message": "Perfection is attained, not when there is nothing more to add, but when there is nothing left to take away.",
+      "username": "supabot",
+    },
+    Object {
+      "channel_id": "2",
+      "id": "3",
+      "message": "foo",
+      "username": "supabot",
+    },
+  ],
+  "limit": 64,
+  "skip": 0,
+  "total": "3",
+}
+`;
+
+exports[`basic select table 1`] = `
+Object {
+  "data": Array [
+    Object {
+      "age_range": "[1,2)",
+      "catchphrase": "'cat' 'fat'",
+      "data": null,
+      "status": "ONLINE",
+      "username": "supabot",
+    },
+    Object {
+      "age_range": "[25,35)",
+      "catchphrase": "'bat' 'cat'",
+      "data": null,
+      "status": "OFFLINE",
+      "username": "kiwicopple",
+    },
+    Object {
+      "age_range": "[25,35)",
+      "catchphrase": "'bat' 'rat'",
+      "data": null,
+      "status": "ONLINE",
+      "username": "awailas",
+    },
+    Object {
+      "age_range": "[20,30)",
+      "catchphrase": "'fat' 'rat'",
+      "data": null,
+      "status": "ONLINE",
+      "username": "dragarcia",
+    },
+  ],
+  "limit": 64,
+  "skip": 0,
+  "total": "4",
+}
+`;
+
+exports[`embedded filters embedded eq 1`] = `
+Object {
+  "data": Array [
+    Object {
+      "age_range": "[1,2)",
+      "catchphrase": "'cat' 'fat'",
+      "data": null,
+      "messages": Array [
+        Object {
+          "channel_id": 1,
+          "data": null,
+          "id": 1,
+          "message": "Hello World 👋",
+          "username": "supabot",
+        },
+      ],
+      "status": "ONLINE",
+      "username": "supabot",
+    },
+  ],
+  "limit": 64,
+  "skip": 0,
+  "total": "1",
+}
+`;
+
+exports[`embedded filters embedded or 1`] = `
+Object {
+  "message": "\\"failed to parse logic tree ((messages.channel_id.eq.2,messages.message.eq.Hello World 👋))\\" (line 1, column 13)",
+}
+`;
+
+exports[`embedded filters embedded or with and 1`] = `
+Object {
+  "message": "\\"failed to parse logic tree ((messages.channel_id.eq.2,and(messages.message.eq.Hello World 👋,messages.username.eq.supabot)))\\" (line 1, column 13)",
+}
+`;
+
+exports[`embedded select 1`] = `
+Object {
+  "data": Array [
+    Object {
+      "age_range": "[1,2)",
+      "catchphrase": "'cat' 'fat'",
+      "data": null,
+      "messages": Array [
+        Object {
+          "channel_id": 1,
+          "data": null,
+          "id": 1,
+          "message": "Hello World 👋",
+          "username": "supabot",
+        },
+        Object {
+          "channel_id": 2,
+          "data": null,
+          "id": 2,
+          "message": "Perfection is attained, not when there is nothing more to add, but when there is nothing left to take away.",
+          "username": "supabot",
+        },
+        Object {
+          "channel_id": 2,
+          "data": null,
+          "id": 3,
+          "message": "foo",
+          "username": "supabot",
+        },
+      ],
+      "status": "ONLINE",
+      "username": "supabot",
+    },
+  ],
+  "limit": 64,
+  "skip": 0,
+  "total": "1",
+}
+`;
+
+exports[`embedded transforms embedded order 1`] = `
+Object {
+  "message": "\\"failed to parse order (messages.channel_id.desc.nullslast)\\" (line 1, column 10)",
+}
+`;
+
+exports[`embedded transforms embedded order on multiple columns 1`] = `
+Object {
+  "message": "\\"failed to parse order (messages.channel_id.desc.nullslast,messages.username.desc.nullslast)\\" (line 1, column 10)",
+}
+`;
+
+exports[`limit 1`] = `
+Object {
+  "data": Array [
+    Object {
+      "age_range": "[1,2)",
+      "catchphrase": "'cat' 'fat'",
+      "data": null,
+      "status": "ONLINE",
+      "username": "supabot",
+    },
+  ],
+  "limit": 1,
+  "skip": 0,
+  "total": "4",
+}
+`;
+
+exports[`order 1`] = `
+Object {
+  "data": Array [
+    Object {
+      "age_range": "[1,2)",
+      "catchphrase": "'cat' 'fat'",
+      "data": null,
+      "status": "ONLINE",
+      "username": "supabot",
+    },
+    Object {
+      "age_range": "[25,35)",
+      "catchphrase": "'bat' 'cat'",
+      "data": null,
+      "status": "OFFLINE",
+      "username": "kiwicopple",
+    },
+    Object {
+      "age_range": "[20,30)",
+      "catchphrase": "'fat' 'rat'",
+      "data": null,
+      "status": "ONLINE",
+      "username": "dragarcia",
+    },
+    Object {
+      "age_range": "[25,35)",
+      "catchphrase": "'bat' 'rat'",
+      "data": null,
+      "status": "ONLINE",
+      "username": "awailas",
+    },
+  ],
+  "limit": 64,
+  "skip": 0,
+  "total": "4",
+}
+`;
+
+exports[`order on multiple columns 1`] = `
+Object {
+  "data": Array [
+    Object {
+      "channel_id": "2",
+      "id": "2",
+      "message": "Perfection is attained, not when there is nothing more to add, but when there is nothing left to take away.",
+      "username": "supabot",
+    },
+    Object {
+      "channel_id": "2",
+      "id": "3",
+      "message": "foo",
+      "username": "supabot",
+    },
+    Object {
+      "channel_id": "1",
+      "id": "1",
+      "message": "Hello World 👋",
+      "username": "supabot",
+    },
+  ],
+  "limit": 64,
+  "skip": 0,
+  "total": "3",
+}
+`;
+
+exports[`range 1`] = `
+Object {
+  "data": Array [
+    Object {
+      "age_range": "[25,35)",
+      "catchphrase": "'bat' 'cat'",
+      "data": null,
+      "status": "OFFLINE",
+      "username": "kiwicopple",
+    },
+    Object {
+      "age_range": "[25,35)",
+      "catchphrase": "'bat' 'rat'",
+      "data": null,
+      "status": "ONLINE",
+      "username": "awailas",
+    },
+    Object {
+      "age_range": "[20,30)",
+      "catchphrase": "'fat' 'rat'",
+      "data": null,
+      "status": "ONLINE",
+      "username": "dragarcia",
+    },
+  ],
+  "limit": 3,
+  "skip": 1,
+  "total": "4",
+}
+`;
+
+exports[`select on insert 1`] = `
+Object {
+  "status": "ONLINE",
+}
+`;
+
+exports[`single 1`] = `
+Object {
+  "age_range": "[1,2)",
+  "catchphrase": "'cat' 'fat'",
+  "data": null,
+  "status": "ONLINE",
+  "username": "supabot",
+}
+`;
+
+exports[`single on insert 1`] = `
+Object {
+  "age_range": null,
+  "catchphrase": null,
+  "data": null,
+  "status": "ONLINE",
+  "username": "foo",
+}
+`;

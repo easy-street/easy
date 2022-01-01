@@ -1,5 +1,5 @@
 import { AuthSession } from "@supabase/supabase-js";
-import { getEnvVars } from "utils";
+import { getEnvVars } from "./utils";
 import type {
   Entries,
   Filter,

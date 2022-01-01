@@ -1,4 +1,4 @@
-import type { Aliases, ServiceParams } from "api";
+import type { ModelConfigs, ServiceParams } from "api";
 import { getEnvVars } from "utils";
 import { createClient } from "@supabase/supabase-js";
 
@@ -12,20 +12,23 @@ export const supabase = createClient(
   NEXT_PUBLIC_SUPABASE_ANON_KEY
 );
 
-const aliases: Aliases = {
+const modelConfigs: ModelConfigs = {
   posts: {
-    user: {
-      resource: "users",
+    aliases: {
+      user: {
+        resource: "users",
+      },
     },
   },
   users: {
-    title: {
-      resource: "titles",
+    aliases: {
+      title: {
+        resource: "titles",
+      },
     },
   },
-  titles: {},
 };
 
 export function withSupabase<T>(params: ServiceParams<T>) {
-  return { ...params, aliases, db: supabase };
+  return { ...params, db: supabase, modelConfigs };
 }

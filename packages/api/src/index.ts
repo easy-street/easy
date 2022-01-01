@@ -1,5 +1,5 @@
 import * as handlers from "./handlers";
-import { getEnvVars } from "utils";
+import { getEnvVars } from "./utils";
 import getDocsJSON from "./docs";
 import type { Env } from "./docs";
 import type { NextApiHandler, NextApiRequest, NextApiResponse } from "next";
@@ -10,7 +10,7 @@ import type { AuthSession } from "@supabase/supabase-js";
 export * from "./prisma";
 export * as baseService from "./supabase";
 export type { Transformer } from "./prisma";
-export type { Aliases } from "./supabase";
+export type { ModelConfigs } from "./supabase";
 export type { Env };
 export type {
   Filter,

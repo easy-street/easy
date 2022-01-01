@@ -1,22 +1,38 @@
 {
   "name": "api",
   "version": "1.0.0",
-  "main": "index.js",
+  "main": "src/index.ts",
   "sideEffects": false,
   "license": "MIT",
   "private": true,
+  "scripts": {
+    "test": "run-s test:db && jest --runInBand",
+    "test:build": "cd test/db && docker-compose build",
+    "test:clean": "cd test/db && docker-compose down",
+    "test:db": "cd test/db && docker-compose down && docker-compose up -d && wait-for-localhost 3002"
+  },
   "dependencies": {
     "lodash.set": "^4.3.2",
-    "qs": "^6.10.2",
-    "utils": "workspace:*"
+    "qs": "^6.10.2"
   },
   "devDependencies": {
+    "@babel/core": "^7.0.0-0",
     "@supabase/postgrest-js": "^0.35.0",
     "@supabase/supabase-js": "^1.29.1",
+    "@types/jest": "^27.0.3",
     "@types/lodash.set": "^4.3.6",
     "@types/qs": "^6.9.7",
-    "next": "^12.0.7",
+    "cross-fetch": "^3.1.4",
+    "dotenv": "^10.0.0",
+    "jest": "^27.4.5",
+    "next": "latest",
+    "npm-run-all": "^4.1.5",
     "openapi-types": "^10.0.0",
-    "tsconfig": "workspace:*"
+    "react": "^18.0.0-rc.0",
+    "react-dom": "^18.0.0-rc.0",
+    "ts-jest": "^27.1.2",
+    "tsconfig": "workspace:*",
+    "typescript": "^4.5.4",
+    "wait-for-localhost-cli": "^3.0.0"
   }
 }

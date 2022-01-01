@@ -1,4 +1,4 @@
-import { getEnvVars } from "utils";
+import { getEnvVars } from "./utils";
 import { fetcher } from "./fetcher";
 import type { Context, Services } from "./types";
 

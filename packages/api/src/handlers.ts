@@ -2,7 +2,7 @@ import type { NextApiRequest } from "next";
 import type { Filters, Service, TRecursiveField } from "./types";
 import set from "lodash.set";
 import qs from "qs";
-import { getEnvVars } from "utils";
+import { getEnvVars } from "./utils";
 import { AuthSession } from "@supabase/supabase-js";
 
 export interface HandlerContext {
@@ -51,9 +51,16 @@ export function parseQuery<T>(req: NextApiRequest) {
   return {
     ...(query as Partial<Filters<T>>),
     $select: parseRecursive(
-      [...(($or ?? []) as Partial<Filters<T>>[]), rest]
+      [
+        ...(($or ?? []) as Partial<Filters<T>>[]),
+        Object.fromEntries(
+          Object.entries(rest).filter(([key]) => key.includes("."))
+        ),
+      ]
         .flatMap((x) => Object.keys(x))
-        .map((key) => key.slice(0, key.lastIndexOf(".")))
+        .map((key) =>
+          key.includes(".") ? key.slice(0, key.lastIndexOf(".")) : key
+        )
         .concat($select as string[])
     ),
     ...(id === undefined && {

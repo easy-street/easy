@@ -1,9 +1,11 @@
-import { getEnvVars, keys } from "utils";
+import { getEnvVars, keys } from "./utils";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { SupabaseQueryBuilder } from "@supabase/supabase-js/dist/main/lib/SupabaseQueryBuilder";
 import type {
   PostgrestFilterBuilder,
+  PostgrestMaybeSingleResponse,
   PostgrestQueryBuilder,
+  PostgrestSingleResponse,
 } from "@supabase/postgrest-js";
 import type {
   Entries,
@@ -14,19 +16,29 @@ import type {
   TRecursiveField,
 } from "./types";
 
-export type Aliases = Record<
-  string,
-  Record<string, { foreignKey?: string; resource: string }>
->;
+type Aliases = Record<string, { foreignKey?: string; resource: string }>;
 type Method = "insert" | "select" | "update" | "delete";
+
+export type ModelConfigs = Record<
+  string,
+  {
+    aliases?: Aliases;
+    defaultSelect?: string;
+    keyField?: string;
+  }
+>;
 type ExtendedServiceParams<T> = ServiceParams<T> & {
-  aliases: Aliases;
   db: SupabaseClient;
+  modelConfigs: ModelConfigs;
 };
 
 const { DEFAULT_PAGE_SIZE } = getEnvVars({
   DEFAULT_PAGE_SIZE: process.env.DEFAULT_PAGE_SIZE,
 });
+
+function getKeyField<T>(resource: string, params: ExtendedServiceParams<T>) {
+  return params.modelConfigs[resource]?.keyField ?? "id";
+}
 
 function fromDBMethod<T extends { id: unknown }>({
   id,
@@ -44,43 +56,45 @@ function fromDBMethod<T extends { id: unknown }>({
   select: string;
 }) {
   const qb = queryBuilder as PostgrestQueryBuilder<T>;
+  const isIdUndefined = id === undefined;
 
   switch (method) {
     case "insert":
       return qb.insert(data).select(select);
     case "select":
-      return id
-        ? qb.select(select).eq("id", id)
-        : qb.select(select, { count: "exact", head: isCount });
+      return isIdUndefined
+        ? qb.select(select, { count: "exact", head: isCount })
+        : qb.select(select).eq("id", id);
     case "update":
-      return id
-        ? qb.update(data).eq("id", id).select(select)
-        : qb.update(data).select(select);
+      return isIdUndefined
+        ? qb.update(data).select(select)
+        : qb.update(data).eq("id", id).select(select);
     case "delete":
-      return id
-        ? qb.delete().eq("id", id).select(select)
-        : qb.delete().select(select);
+      return isIdUndefined
+        ? qb.delete().select(select)
+        : qb.delete().eq("id", id).select(select);
   }
 }
 
 function maybeWithAllFields({
-  aliases,
+  modelConfigs = {},
   resource,
   resourceSelect,
   select,
 }: {
-  aliases: Aliases;
+  modelConfigs: ModelConfigs;
   resource: string;
   resourceSelect: string;
   select: TRecursiveField;
 }) {
-  const aliasFields = Object.keys(aliases[resource]);
+  const { aliases = {}, defaultSelect } = modelConfigs[resource] ?? {};
+  const aliasFields = Object.keys(aliases);
 
   return [
     Object.keys(select)
       .map((alias) => alias.split("!")[0])
       .filter((field) => !aliasFields.includes(field)).length === 0
-      ? "*, id::text"
+      ? defaultSelect ?? "*"
       : undefined,
     resourceSelect,
   ]
@@ -95,16 +109,18 @@ function getResourceSelect<T>({
   params: ExtendedServiceParams<T>;
   select: TRecursiveField;
 }): string {
-  const { aliases, resource } = params;
+  const { modelConfigs, resource } = params;
+  const aliases = modelConfigs[resource]?.aliases ?? {};
+  const keyField = getKeyField<T>(resource, params);
 
   return Object.entries(select)
     .map((entry) => {
       const [originalAlias, field] = entry;
       const [alias, joinType = "!inner"] = originalAlias.split(/(?=!)/g);
-      const relation = aliases[resource][alias];
+      const relation = aliases[alias];
 
       if (!relation) {
-        return alias === "id" ? `${alias}::text` : alias;
+        return alias === keyField ? keyField : alias;
       }
 
       const { foreignKey, resource: relationResource } = relation;
@@ -117,11 +133,11 @@ function getResourceSelect<T>({
       }
 
       if (field === true) {
-        return `${embeddedResource} ( *, id::text )`;
+        return `${embeddedResource} ( *, ${keyField} )`;
       }
 
       return `${embeddedResource} ( ${maybeWithAllFields({
-        aliases,
+        modelConfigs,
         resource: relationResource,
         resourceSelect: getResourceSelect<T>({
           params: {
@@ -138,16 +154,17 @@ function getResourceSelect<T>({
 }
 
 function getSelect<T>(params: ExtendedServiceParams<T>): string {
-  const { aliases, query, resource } = params;
+  const { modelConfigs, query, resource } = params;
+  const { defaultSelect } = modelConfigs[resource] ?? {};
   const { $select = {} } = query;
   const fields = Object.keys($select);
 
   if (fields.length === 0) {
-    return "*, id::text";
+    return defaultSelect ?? "*";
   }
 
   return maybeWithAllFields({
-    aliases,
+    modelConfigs,
     resource,
     resourceSelect: getResourceSelect({
       params,
@@ -165,6 +182,10 @@ function getOr<T>(
       const entries = Object.entries(filter) as Entries<Partial<Filters<T>>>;
       const values = entries.map((entry) => {
         const [key, value] = entry;
+        const left = key as string;
+        const column = left.includes(".")
+          ? left.slice(left.lastIndexOf(".") + 1)
+          : left;
 
         if (
           value === true ||
@@ -172,7 +193,7 @@ function getOr<T>(
           value === null ||
           value === ""
         ) {
-          return `${key}.is.${value}`;
+          return `${column}.is.${value}`;
         }
 
         if (
@@ -183,24 +204,54 @@ function getOr<T>(
           const { $in, $gt, $gte, $lt, $lte, $ne, $nin } = value as Filter<T>;
 
           return [
-            $in === undefined ? null : `${key}.in.(${$in.join(",")})`,
-            $gt === undefined ? null : `${key}.gt.${$gt}`,
-            $gte === undefined ? null : `${key}.gte.${$gte}`,
-            $lt === undefined ? null : `${key}.lt.${$lt}`,
-            $lte === undefined ? null : `${key}.lte.${$lte}`,
-            $ne === undefined ? null : `or(${key}.is.null,${key}.neq.${$ne})`,
-            $nin === undefined ? null : `${key}.not.in.(${$nin.join(",")})`,
+            $in === undefined ? null : `${column}.in.(${$in.join(",")})`,
+            $gt === undefined ? null : `${column}.gt.${$gt}`,
+            $gte === undefined ? null : `${column}.gte.${$gte}`,
+            $lt === undefined ? null : `${column}.lt.${$lt}`,
+            $lte === undefined ? null : `${column}.lte.${$lte}`,
+            $ne === undefined
+              ? null
+              : `or(${column}.is.null,${column}.neq.${$ne})`,
+            $nin === undefined ? null : `${column}.not.in.(${$nin.join(",")})`,
           ]
             .filter(Boolean)
             .join(",");
         } else {
-          return `${key}.eq.${value}`;
+          return `${column}.eq.${value}`;
         }
       });
 
       return entries.length > 1 ? `and(${values})` : values;
     })
     .join(",");
+}
+
+function getOrFiltersByTable<T>(
+  $or: Partial<Record<keyof T, FilterValue<T> | Filter<T>>>[],
+  resource: string
+) {
+  let orFilters: Record<
+    string,
+    Partial<Record<keyof T, FilterValue<T> | Filter<T>>>[]
+  > = {};
+
+  $or.map((orFilter) => {
+    const entries = Object.entries(orFilter);
+    const key = entries[0][0];
+    const table = key.includes(".") ? key.split(".")[0] : resource;
+
+    if (!orFilters[table]) {
+      orFilters[table] = [];
+    }
+
+    orFilters[table].push(
+      Object.fromEntries(entries) as Partial<
+        Record<keyof T, FilterValue<T> | Filter<T>>
+      >
+    );
+  });
+
+  return orFilters;
 }
 
 export function getFilterBuilder<T>({
@@ -212,6 +263,7 @@ export function getFilterBuilder<T>({
   isCount?: boolean;
   params: ServiceParams<T>;
 }): PostgrestFilterBuilder<T> {
+  const { query, resource } = params;
   const {
     $limit = Number(DEFAULT_PAGE_SIZE),
     $or,
@@ -219,13 +271,19 @@ export function getFilterBuilder<T>({
     $skip = 0,
     $sort = {},
     ...rest
-  } = params.query;
+  } = query;
   const entries = Object.entries(rest) as Entries<Filters<T>>;
 
   let dbQuery = filterBuilder;
 
   if ($or && $or.length > 0) {
-    dbQuery = dbQuery.or(getOr<T>($or));
+    Object.entries(getOrFiltersByTable<T>($or, resource)).forEach(
+      ([table, orFilters]) => {
+        dbQuery = dbQuery.or(getOr<T>(orFilters), {
+          ...(table !== resource && { foreignTable: table }),
+        });
+      }
+    );
   }
 
   entries.forEach((entry) => {
@@ -236,7 +294,7 @@ export function getFilterBuilder<T>({
       return;
     }
 
-    if (value === "" || value === null) {
+    if (value === "" || value === null || value === "null") {
       dbQuery = dbQuery.is(key, null);
       return;
     }
@@ -279,7 +337,7 @@ export function getFilterBuilder<T>({
       if ($nin !== undefined) {
         dbQuery = dbQuery.not(key, "in", `(${$nin.join(",")})`);
       }
-    } else {
+    } else if (value !== undefined) {
       dbQuery = dbQuery.eq(key, value as T[keyof T]);
     }
   });
@@ -291,7 +349,15 @@ export function getFilterBuilder<T>({
   }
 
   for (const key of keys($sort)) {
-    dbQuery = dbQuery.order(key, { ascending: $sort[key] });
+    const left = key as string;
+    const [table, column] = left.includes(".")
+      ? left.split(".")
+      : [resource, left];
+
+    dbQuery = dbQuery.order(column as keyof T, {
+      ascending: $sort[key],
+      ...(table !== resource && { foreignTable: table }),
+    });
   }
 
   return dbQuery;
@@ -329,21 +395,29 @@ function fromDB<T extends { id: unknown }>({
   });
 }
 
-export async function create<T extends { id: unknown }>(
+async function throwOnError<T>(
+  p: PromiseLike<PostgrestSingleResponse<T> | PostgrestMaybeSingleResponse<T>>
+) {
+  const { data, error } = await p;
+
+  if (error) {
+    throw error;
+  }
+
+  return data;
+}
+
+export function create<T extends { id: unknown }>(
   data: Partial<T>,
   params: ExtendedServiceParams<T>
 ) {
-  const { data: created } = await fromDB<T>({
-    data,
-    method: "insert",
-    params,
-  }).single();
-
-  if (!created) {
-    throw new Error("Something went wrong");
-  }
-
-  return created;
+  return throwOnError<T>(
+    fromDB<T>({
+      data,
+      method: "insert",
+      params,
+    }).single()
+  );
 }
 
 export async function find<T extends { id: unknown }>(
@@ -356,7 +430,7 @@ export async function find<T extends { id: unknown }>(
   const { count, data = [] } = await fromDB<T>({
     method: "select",
     params,
-  });
+  }).throwOnError();
 
   return {
     total: count ? BigInt(count) : null,
@@ -366,43 +440,43 @@ export async function find<T extends { id: unknown }>(
   };
 }
 
-export async function get<T extends { id: unknown }>(
+export function get<T extends { id: unknown }>(
   id: unknown,
   params: ExtendedServiceParams<T>
 ) {
-  return (
-    await fromDB<T>({
+  return throwOnError(
+    fromDB<T>({
       id,
       method: "select",
       params,
     }).maybeSingle()
-  ).data;
+  );
 }
 
-export async function patch<T extends { id: unknown }>(
+export function patch<T extends { id: unknown }>(
   id: unknown,
   data: Partial<T>,
   params: ExtendedServiceParams<T>
 ) {
-  return (
-    await fromDB<T>({
+  return throwOnError(
+    fromDB<T>({
       id,
       data,
       method: "update",
       params,
     }).maybeSingle()
-  ).data;
+  );
 }
 
-export async function remove<T extends { id: unknown }>(
+export function remove<T extends { id: unknown }>(
   id: unknown,
   params: ExtendedServiceParams<T>
 ) {
-  return (
-    await fromDB<T>({
+  return throwOnError(
+    fromDB<T>({
       id,
       method: "delete",
       params,
     }).maybeSingle()
-  ).data;
+  );
 }
