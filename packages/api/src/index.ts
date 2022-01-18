@@ -4,7 +4,7 @@ import getDocsJSON from "./docs";
 import type { Env } from "./docs";
 import type { NextApiHandler, NextApiRequest, NextApiResponse } from "next";
 import type { Pagination, Services } from "./types";
-import type { OpenAPIV3 } from "openapi-types";
+import type { OpenAPIV2, OpenAPIV3 } from "openapi-types";
 import type { AuthSession } from "@supabase/supabase-js";
 
 export * from "./prisma";
@@ -36,11 +36,13 @@ const { OBJECT_HEADER } = getEnvVars({
 });
 
 function getPayload<T>({
+  definitions,
   env,
   getSession,
   req,
   services,
 }: {
+  definitions?: OpenAPIV2.DefinitionsObject;
   env?: Env;
   getSession?: (req: NextApiRequest) => AuthSession | undefined;
   req: NextApiRequest;
@@ -54,7 +56,7 @@ function getPayload<T>({
   const [resource, id] = api as string[];
 
   if (!resource) {
-    return getDocsJSON<T>(services, env);
+    return getDocsJSON<T>(services, { definitions, env });
   }
 
   const service = services[resource];
@@ -85,35 +87,32 @@ function getPayload<T>({
   }
 }
 
-export default function Api<Model>({
-  env,
-  getSession,
-  services,
-}: {
-  env?: Env;
-  getSession: (req: NextApiRequest) => AuthSession | undefined;
-  services: Services<Model>;
-}): NextApiHandler<
+type APIResponse<Model> =
   | Partial<Model>
   | Partial<Model>[]
   | Pagination<Model>
   | OpenAPIV3.Document
   | { message?: string }
-  | null
-> {
+  | null;
+
+export default function Api<Model>({
+  definitions,
+  env,
+  getSession,
+  services,
+}: {
+  definitions?: OpenAPIV2.DefinitionsObject;
+  env?: Env;
+  getSession: (req: NextApiRequest) => AuthSession | undefined;
+  services: Services<Model>;
+}): NextApiHandler<APIResponse<Model>> {
   return async function handler(
     req: NextApiRequest,
-    res: NextApiResponse<
-      | Partial<Model>
-      | Partial<Model>[]
-      | Pagination<Model>
-      | OpenAPIV3.Document
-      | { message?: string }
-      | null
-    >
+    res: NextApiResponse<APIResponse<Model>>
   ): Promise<void> {
     try {
       const payload = await getPayload<Model>({
+        definitions,
         env,
         getSession,
         req,

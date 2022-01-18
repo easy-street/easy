@@ -1,6 +1,7 @@
 import { getEnvVars } from "./utils";
 import { fetcher } from "./fetcher";
 import type { Context, Services } from "./types";
+import { OpenAPIV2 } from "openapi-types";
 
 export type Env = {
   NEXT_PUBLIC_SUPABASE_ANON_KEY: string;
@@ -216,7 +217,13 @@ function getFindManyParameters<T>(ctx: Context<T>) {
   ];
 }
 
-export default async function getDocsJSON<T>(services: Services<T>, env?: Env) {
+export default async function getDocsJSON<T>(
+  services: Services<T>,
+  {
+    definitions: providedDefinitions,
+    env,
+  }: { definitions?: OpenAPIV2.DefinitionsObject; env?: Env }
+) {
   const url =
     process.env.NEXT_PUBLIC_SUPABASE_URL ?? env?.NEXT_PUBLIC_SUPABASE_URL;
   const apikey =
@@ -231,9 +238,11 @@ export default async function getDocsJSON<T>(services: Services<T>, env?: Env) {
     throw new Error("Missing supabase anon key");
   }
 
-  const { definitions } = await fetcher(`${url}/rest/v1/`, {
-    headers: { apikey },
-  });
+  const { definitions } = await (providedDefinitions
+    ? Promise.resolve({ definitions: providedDefinitions })
+    : fetcher(`${url}/rest/v1/`, {
+        headers: { apikey },
+      }));
   const resources = Object.keys(services);
 
   return {
